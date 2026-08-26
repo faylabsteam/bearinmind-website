@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BEARinmind Academy – Học viện Phát triển Con người</title>
+<link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Lexend:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">  
+<link rel="icon" href="favicon.ico">
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="main-nav">
+  <a href="#" class="nav-logo">
+    <img src="images/bear-logo.svg" alt="BEARinmind Academy" style="height:25px; width:auto; display:block;">
+  </a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="bearinmind-course.html">Khóa học</a></li>
+    <li><a href="bearinmind-instructors.html">Giảng viên</a></li>
+    <li><a href="bearinmind-score.html">BEARS Score</a></li>
+    <li><a href="contact-us.html">Contact</a></li>
+  </ul>
+  <a href="index.html#dangkyngay" class="nav-cta">Đăng ký ngay</a>
+</nav>
+
+
+<!-- HERO -->
+<section id="hero">
+  <!-- background image with Ken Burns zoom -->
+  <div class="hero-bg-img">
+  <img src="images/hero-main.jpg"
+       style="width:100%; height:100%; object-fit:cover;">
+</div>
+
+  <!-- stacked overlay layers -->
+  <div class="hero-overlay-dark"></div>
+  <div class="hero-overlay-bottom"></div>
+  <div class="hero-overlay-warm"></div>
+
+  <!-- content -->
+  <div class="hero-content">
+    <div class="hero-eyebrow">Học viện Phát triển & Rèn luyện Con người</div>
+
+    <h1 class="hero-title">
+      <span class="tl tl-1">BẢN LĨNH</span>
+      <span class="tl tl-2">LÀ MỘT</span>
+      <span class="tl tl-3">LỰA CHỌN</span>
+    </h1>
+
+    <div class="hero-divider"></div>
+
+    <p class="hero-sub">
+      Thế giới chưa bao giờ ngừng hỗn loạn.<br>
+      Hãy trang bị cho bạn sự vững vàng.
+    </p>
+
+    <div class="hero-btns">
+      <a href="#course" class="btn btn-primary">Đăng ký Khoá học</a>
+      <a href="bearinmind-course.html" class="btn btn-ghost">Tìm hiểu thêm</a>
+    </div>
+  </div>
+
+  <!-- scroll hint -->
+  <div class="hero-scroll">
+    <span class="hero-scroll-label">Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap" aria-hidden="true">
+  <div class="marquee-track">
+    <!-- Set 1 -->
+    <span class="marquee-item">Kiên cường</span><span class="marquee-sep">✶</span>
+    <span class="marquee-item">Tư duy sáng tỏ</span><span class="marquee-sep">✶</span>
+    <span class="marquee-item">Hành động quyết đoán</span><span class="marquee-sep">✶</span>
+    <span class="marquee-item">EQ</span><span class="marquee-sep">✶</span>
+    <span class="marquee-item">Break to Build</span><span class="marquee-sep">✶</span>
+    <span class="marquee-item">Antifragile</span><span class="marquee-sep">✶</span>
+    <span class="marquee-item">Bản lĩnh</span><span class="marquee-sep">✶</span>
+    <!-- Set 2 (duplicate for seamless loop) -->
+    <span class="marquee-item">Kiên cường</span><span class="marquee-sep">✶</span>
+    <span class="marquee-item">Tư duy sáng tỏ</span><span class="marquee-sep">✶</span>
+    <span class="marquee-item">Hành động quyết đoán</span><span class="marquee-sep">✶</span>
+    <span class="marquee-item">EQ</span><span class="marquee-sep">✶</span>
+    <span class="marquee-item">Break to Build</span><span class="marquee-sep">✶</span>
+    <span class="marquee-item">Antifragile</span><span class="marquee-sep">✶</span>
+    <span class="marquee-item">Bản lĩnh</span><span class="marquee-sep">✶</span>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section class="sec sec-dark" id="about">
+  <div class="inner">
+    <div class="about-grid">
+      <div class="about-visual reveal">
+        <div class="about-img-ph" style="aspect-ratio:unset; padding:0; background:none; border:none;">
+          <img src="images/about-team.png" alt="About Team" style="width:100%; height:auto; border-radius:var(--r-lg); display:block; object-fit:contain;">
+        </div>
+           </div>
+      <div>
+        <div class="slabel reveal">01 - BEARinmind LÀ GÌ?</div>
+        <h2 class="stitle stitle-w reveal delay-1"><em>BEARinmind ACADEMY<br></em>là học viện phát triển & rèn luyện con người</h2>
+        <div class="o-bar reveal delay-1"></div>
+        <p class="sdesc sdesc-w reveal delay-2">
+          Chúng tôi tin rằng một cá nhân thành công và tử tế là tác phẩm của một quá trình không ngừng trau dồi kiến thức và rèn luyện. Thành công và chất lượng cuộc sống của mỗi người khởi nguồn từ Tư duy (Mindset) và Nội lực bên trong mỗi chúng ta chứ không thể từ đâu khác.
+        </p>
+        <p class="sdesc sdesc-w reveal delay-2" style="margin-top:-20px;">
+          Thành công không tự nhiên mà đến hay sức mạnh nội tại không bẩm sinh mà có. Mọi quá trình trưởng thành đều cần được thực hành, trải nghiệm và bồi đắp.
+        </p>
+        <p class="sdesc sdesc-w reveal delay-2" style="margin-top:-20px;">
+          Lấy cảm hứng từ hình ảnh chú gấu (BEAR) kiên nhẫn, thông minh, mạnh mẽ, bền bỉ và không bao giờ bỏ cuộc khi theo đuổi mục tiêu, BEARinmind muốn đồng hành cùng bạn để xây dựng những nền tảng giá trị cần thiết cho thành công.
+        </p>
+        <p class="sdesc sdesc-w reveal delay-3" style="margin-top:-20px;">
+          Khắc cốt ghi tâm từng bài học, từng trải nghiệm với BEARinmind, rồi một ngày nhìn lại bạn sẽ nhận ra, chú gấu trong tư duy của chính mình đã thức tỉnh từ lâu rồi.
+        </p>
+        <div class="about-points">
+          <div class="about-point reveal delay-3">
+            <div class="pt-icon">💪</div>
+            <div class="pt-body">
+              <h4>Bản lĩnh nội tại <em style="color:rgba(255,255,255,0.5);font-size:14px;">(Inner Strength)</em></h4>
+              <p>Ý chí kiên cường (Resilience) · Tư duy sáng tỏ (Mind Clarity) · Hành động quyết đoán (Courage) · Tự tin (Self-confidence) · Bản lĩnh càng biến động càng mạnh mẽ (Antifragility) · Thiết lập Mục tiêu (Goal Setting)</p>
+            </div>
+          </div>
+          <div class="about-point reveal delay-3">
+            <div class="pt-icon">🧠</div>
+            <div class="pt-body">
+              <h4>Khả năng làm chủ cảm xúc <em style="color:rgba(255,255,255,0.5);font-size:14px;">(Emotional Mastery)</em></h4>
+              <p>Nhận diện &amp; điều tiết cảm xúc · Trí tuệ Xúc Cảm (EQ) · Không để bản năng lấn át lý trí</p>
+            </div>
+          </div>
+          <div class="about-point reveal delay-4">
+            <div class="pt-icon">🚀</div>
+            <div class="pt-body">
+              <h4>Các năng lực nâng cao <em style="color:rgba(255,255,255,0.5);font-size:14px;">(Advanced Capabilities)</em></h4>
+              <p>Năng lực lãnh đạo (Leadership) · Làm chủ các mối quan hệ (Relationship Mastery) · Bản lĩnh doanh nghiệp (Entrepreneurship)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE DARK -->
+<div class="quote-dark">
+  <div class="qd-inner">
+    <p class="qd-text" >
+      "Nội lực và bản lĩnh không tự nhiên sinh ra.<br>
+      <em>Cả hai chỉ có thể xuất hiện từ những lần va đập và thất bại.</em>"
+    </p>
+  </div>
+</div>
+
+<!-- AUDIENCE -->
+<section class="sec sec-dark" id="audience">
+  <div class="inner">
+    <div class="aud-hd">
+      <div class="slabel slabel-center reveal">02 - BEARinmind DÀNH CHO AI?</div>
+      <h2 class="stitle stitle-w reveal delay-1"><em>Khóa học tư duy<br></em> cho ai không muốn dậm chân tại chỗ</h2>
+    </div>
+   <div class="aud-grid">
+      <!-- Card 1 -->
+      <div class="aud-card reveal" style="cursor:default; aspect-ratio:unset; position:relative; border-radius:var(--r-lg); overflow:hidden; display:flex; flex-direction:column; min-height:480px;">
+        <img src="images/audience-junior-leaders.png" alt="Quản lý cấp trung" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;z-index:0;">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.1) 100%);z-index:1;"></div>
+        <div style="position:relative;z-index:2;margin-top:auto;padding:24px;">
+          <span class="ac-badge">Dành cho</span>
+          <h3 class="ac-title" style="font-size:22px; margin-bottom:8px; color:#fff;">Quản lý cấp trung</h3>
+          <p style="font-family:var(--font-b);font-size:14px;color:rgba(255,255,255,0.75);line-height:1.65;margin-bottom:12px;">Những người cần giải toả áp lực kẹp giữa để đạt được sự cân bằng tối ưu giữa kỳ vọng từ cấp trên và trách nhiệm với đội ngũ bên dưới.</p>
+          <div class="aud-expand-body" style="display:none; font-family:var(--font-b);font-size:13px;color:rgba(255,255,255,0.7);line-height:1.7;margin-bottom:12px;">
+            <p>Có những thời điểm, bản lĩnh lãnh đạo của bạn dần bị bào mòn vì nỗi sợ đưa ra quyết định sai, cùng rủi ro kiệt sức âm thầm. Khóa học giúp bạn xây dựng điểm tựa nội lực vững chắc, ra quyết định bằng tư duy rõ ràng và dẫn dắt đội ngũ đi xa hơn.</p>
+          </div>
+          <button onclick="toggleExpand(this)" style="font-family:var(--font-m);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);background:none;border:1px solid var(--orange-border);border-radius:var(--r-pill);padding:6px 14px;cursor:pointer;transition:background .2s;">Xem thêm ›</button>
+        </div>
+      </div>
+      <!-- Card 2 -->
+      <div class="aud-card reveal delay-1" style="cursor:default; aspect-ratio:unset; position:relative; border-radius:var(--r-lg); overflow:hidden; display:flex; flex-direction:column; min-height:480px;">
+        <img src="images/audience-founders.png" alt="Lãnh đạo SME và Startup" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;z-index:0;">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.1) 100%);z-index:1;"></div>
+        <div style="position:relative;z-index:2;margin-top:auto;padding:24px;">
+          <span class="ac-badge">Dành cho</span>
+          <h3 class="ac-title" style="font-size:22px; margin-bottom:8px; color:#fff;">Lãnh đạo SME và Startup</h3>
+          <p style="font-family:var(--font-b);font-size:14px;color:rgba(255,255,255,0.75);line-height:1.65;margin-bottom:12px;">Bạn đang lèo lái con tàu doanh nghiệp trong một thời kỳ đầy biến động, nơi không có quyết định nào thật sự dễ dàng hay chắc chắn tuyệt đối.</p>
+          <div class="aud-expand-body" style="display:none; font-family:var(--font-b);font-size:13px;color:rgba(255,255,255,0.7);line-height:1.7;margin-bottom:12px;">
+            <p>Là người sáng lập, người giữ lửa và cũng là người đứng mũi chịu sào, bạn có thể đã nhiều lần cảm thấy đơn độc. Khoá học giúp bạn xây dựng tư duy và bản lĩnh Antifragile, để không chỉ trụ vững mà còn trưởng thành mạnh mẽ hơn nhờ biến động.</p>
+          </div>
+          <button onclick="toggleExpand(this)" style="font-family:var(--font-m);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);background:none;border:1px solid var(--orange-border);border-radius:var(--r-pill);padding:6px 14px;cursor:pointer;transition:background .2s;">Xem thêm ›</button>
+        </div>
+      </div>
+      <!-- Card 3 -->
+      <div class="aud-card reveal delay-2" style="cursor:default; aspect-ratio:unset; position:relative; border-radius:var(--r-lg); overflow:hidden; display:flex; flex-direction:column; min-height:480px;">
+        <img src="images/audience-overthinkers.png" alt="Người thách thức bản thân" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;z-index:0;">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.1) 100%);z-index:1;"></div>
+        <div style="position:relative;z-index:2;margin-top:auto;padding:24px;">
+          <span class="ac-badge">Dành cho</span>
+          <h3 class="ac-title" style="font-size:22px; margin-bottom:8px; color:#fff;">Người thách thức bản thân</h3>
+          <p style="font-family:var(--font-b);font-size:14px;color:rgba(255,255,255,0.75);line-height:1.65;margin-bottom:12px;">Bạn luôn khao khát tiến lên và biết rằng bản thân còn có thể tiến xa hơn nếu năng lực cá nhân có thể song hành cùng bản lĩnh mạnh mẽ.</p>
+          <div class="aud-expand-body" style="display:none; font-family:var(--font-b);font-size:13px;color:rgba(255,255,255,0.7);line-height:1.7;margin-bottom:12px;">
+            <p>Khóa học giúp phá vỡ rào cản đang giới hạn lòng tin của bạn, giúp định vị lại bản thân và tái định nghĩa cách bạn nhìn nhận thất bại. Đây là hành trình đồng hành dẫn dắt bạn bước ra khỏi vùng an toàn một cách chủ động và có định hướng.</p>
+          </div>
+          <button onclick="toggleExpand(this)" style="font-family:var(--font-m);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);background:none;border:1px solid var(--orange-border);border-radius:var(--r-pill);padding:6px 14px;cursor:pointer;transition:background .2s;">Xem thêm ›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PILLARS -->
+<section class="sec sec-off" id="pillars">
+  <div class="inner">
+    <div class="pillars-hd">
+      <div>
+        <div class="slabel reveal">03 - Mục tiêu Đào tạo</div>
+        <h2 class="stitle stitle-k reveal delay-1">Tư duy vững vàng <em>bên trong </em> để đương đầu mọi thách thức <em>bên ngoài.</em></h2>
+      </div>
+<div class="pillars-img-ph reveal delay-2" 
+     style="border-radius:12px; overflow:hidden;">
+
+<img src="images/pillars-training.png"
+     style="width:100%; height:auto; border-radius:12px;">
+
+
+
+      </div>
+    </div>
+    <div class="aud-grid">
+      <div class="pillar-card reveal">
+        <div class="pillar-num">01</div>
+        <h3 class="pillar-title" style="font-size:30px;">Bản lĩnh nội tại<span class="pillar-en">(Inner Strength)</span></h3>
+        <p class="pillar-desc" style="font-size:15px;">Kiên cường · Tư duy Sáng tỏ · Hành động quyết đoán. Bộ ba năng lực hội tụ giúp bạn phát triển mạnh mẽ dưới áp lực (Antifragile).</p>
+      </div>
+      <div class="pillar-card reveal delay-1">
+        <div class="pillar-num">02</div>
+        <h3 class="pillar-title" style="font-size:30px;">Làm chủ cảm xúc<span class="pillar-en">(Emotional Mastery)</span></h3>
+        <p class="pillar-desc" style="font-size:15px;">Nhận diện, điều tiết và chuyển hóa cảm xúc một cách chủ động. Giữ bản thân điềm tĩnh, sáng suốt trước mọi biến động.</p>
+      </div>
+      <div class="pillar-card reveal delay-2">
+        <div class="pillar-num">03</div>
+         <h3 class="pillar-title" style="font-size:30px;">Năng lực nâng cao<span class="pillar-en">(Advanced Capabilities)</span></h3>
+        <p class="pillar-desc" style="font-size:15px;">Kỹ năng lãnh đạo · Làm chủ mối quan hệ · Bản lĩnh doanh nghiệp. Nền tảng để tạo ảnh hưởng và dẫn dắt người khác.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COURSE -->
+<section class="sec sec-dark" id="course">
+  <div class="inner">
+    <div class="course-grid">
+      <div>
+        <div class="slabel reveal">04 - Khóa học Flagship</div>
+        <h2 class="course-name reveal delay-1">BREAK<br>TO<br><em>BUILD</em></h2>
+        <p class="course-sub reveal delay-2" style="font-family:var(--font-d);font-size:clamp(16px,2vw,22px);font-weight:800;font-style:normal;color:rgba(255,255,255,0.9);line-height:2;">Biến <span style="color:var(--orange);">áp lực</span> thành <span style="color:var(--orange);">siêu năng lực</span></p>
+        <div class="pquote reveal delay-2">
+          Mỗi khó khăn đều là nguyên liệu. Khoá học không chỉ giúp bạn đứng vững trước sóng gió mà còn biến nó thành cơ hội để bứt phá.
+        </div>
+        <div class="reveal delay-3" style="display:flex;gap:12px;flex-wrap:wrap;">
+          <a href="#dangkyngay" class="btn btn-primary">Đăng ký ngay</a>
+          <a href="bearinmind-course.html" class="btn btn-ghost">Tìm hiểu thêm</a>
+        </div>
+      </div>
+      <div class="feat-list">
+        <div class="feat-item reveal">
+          <div class="feat-icon">💭</div>
+          <div class="feat-body">
+            <h4 style="font-size:17px;">Phương pháp Phản tư sâu - Deep Projective Learning</h4>
+            <p style="font-size:15px;">Hành trình phản chiếu sâu giúp học viên hiểu tận gốc nguyên nhân của những giới hạn bên trong thông qua quá trình tự khám phá và phản tư có hướng dẫn.</p>
+          </div>
+        </div>
+        <div class="feat-item reveal delay-1">
+          <div class="feat-icon">📊</div>
+          <div class="feat-body">
+            <h4 style="font-size:17px;">Công cụ đo lường B.E.A.R.S Score - Assessment Test</h4>
+            <p style="font-size:15px;">Bài test tâm lý độc quyền phát triển dựa trên nền tảng Big Five OCEAN, giúp chuyển học trình và kết quả thành dữ liệu có thể đo lường.</p>
+          </div>
+        </div>
+        <div class="feat-item reveal delay-2">
+          <div class="feat-icon">🧬</div>
+          <div class="feat-body">
+            <h4 style="font-size:17px;">Khoa học & Tâm lý - Neuroscience & Psycho-Insight</h4>
+            <p style="font-size:15px;">Ứng dụng các nguyên lý tâm lý học hành vi và khoa học nhận thức giúp học viên hiểu sâu về cách thức vận hành tư duy và hành vi của chính mình.</p>
+          </div>
+        </div>
+        <div class="feat-item reveal delay-3">
+          <div class="feat-icon">🎯</div>
+          <div class="feat-body">
+            <h4 style="font-size:17px;">Kỹ thuật Khai vấn - Coaching Technique</h4>
+            <p style="font-size:15px;">Lần đầu tiên ứng dụng kỹ thuật khai vấn chuyên nghiệp nhằm khơi gợi tiềm năng, năng lực và sức mạnh cá nhân ở tầng sâu.</p>
+          </div>
+        </div>
+        <div class="feat-item reveal delay-4">
+          <div class="feat-icon">🧰</div>
+          <div class="feat-body">
+            <h4 style="font-size:17px;">Bộ công cụ Tư duy - Mindset & Reaction Toolkit</h4>
+            <p style="font-size:15px;">Các công cụ thiết thực giúp học viên chuyển hoá tư duy mạnh mẽ và xây dựng kế hoạch hành động cụ thể sau khóa học.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE DARK -->
+<div class="quote-dark">
+  <div class="qd-inner">
+    <p class="qd-text">
+      "Thất bại không phải là nghĩa đối lập của thành công.<br>
+      <em>Thất bại là một phần tất yếu của thành công.</em>"
+    </p>
+  </div>
+</div>
+
+<!-- TEAM -->
+<section class="sec sec-off" id="team">
+  <div class="inner">
+    <div class="team-hd">
+      <div class="slabel slabel-center reveal">05 - Đội ngũ</div>
+      <h2 class="stitle stitle-k reveal delay-1">Những người dẫn đường</h2>
+    </div>
+    <div class="team-grid team-grid-two">
+      <div class="team-card reveal">
+        <div class="team-photo">
+          <div class="team-photo-ph" 
+     style="width:120px; height:120px; border-radius:70%; overflow:hidden;">
+  
+  <img src="images/mio-quang-nguyen.jpg" alt="Anh Mio Quang Nguyễn"
+       style="width:100%; height:100%; object-fit:cover;">
+  
+</div>
+        </div>
+        <h3 class="team-name">Mio Quang Nguyen</h3>
+         <span class="team-tag">Co-Founder & CEO</span>
+        <p class="pillar-desc" style="font-size:15px;">Chuyên gia chiến lược kinh doanh và chiến lược ứng dụng.</p>
+      </div>
+      <div class="team-card reveal delay-1">
+        <div class="team-photo">
+<div class="team-photo-ph" 
+     style="width:120px; height:120px; border-radius:80%; overflow:hidden;">
+  
+  <img src="images/mai-hien.png" alt="Chị Mai Hiền"
+       style="width:100%; height:100%; object-fit:cover;">
+  
+</div>
+        </div>
+        <h3 class="team-name">Mai Hiền</h3>
+        <span class="team-tag">Co-Founder & Mindset Educator</span>
+        <p class="pillar-desc" style="font-size:15px;">Hơn 25 năm trong lĩnh vực giáo dục tư duy và phát triển bản thân.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED -->
+<div class="featured">
+  <div class="featured-inner">
+    <span class="feat-label">Featured On</span>
+    <div class="feat-sep"></div>
+    <div class="feat-logos">
+      <a href="https://www.1990.agency/" target="_blank" rel="noopener" class="feat-logo-link">
+        <img src="images/partner-01.png" alt="Partner 01" style="height:50px;width:auto;display:block;">
+      </a>
+      <a href="[PARTNER_02_URL]" target="_blank" rel="noopener" class="feat-logo-link">
+        <img src="images/partner-02.png" alt="Partner 02" style="height:50px;width:auto;display:block;">
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<section class="sec sec-white" id="dangkyngay">
+
+  <div class="inner">
+
+    <div class="contact-grid">
+
+      <!-- LEFT COLUMN -->
+      <div class="contact-left">
+
+        <div class="slabel reveal">
+          06 - Liên hệ BEARinmind
+        </div>
+
+        <h2 class="stitle stitle-k reveal delay-1">
+          Đăng ký thời gian học<br>
+          <em>phù hợp với bạn</em>
+        </h2>
+
+        <div class="o-bar reveal delay-1"></div>
+
+
+
+
+        <!-- CONTACT -->
+
+      <div class="contact-item">
+    <i class="fa-regular fa-envelope"></i>
+    contact@bearinmind.vn
+</div>
+
+<div class="contact-item">
+    <i class="fa-solid fa-phone"></i>
+    0868 712 714
+</div>
+
+<div class="contact-item">
+    <i class="fa-solid fa-globe"></i>
+    www.bearinmind.vn
+</div>
+
+<div class="contact-item">
+    <i class="fa-solid fa-location-dot"></i>
+    62 Võ Văn Tần, TP.HCM
+</div>
+
+      </div>
+
+      <!-- RIGHT COLUMN -->
+
+      <div class="contact-right">
+
+<form id="contactForm" class="contact-form">
+
+    <div class="form-row">
+
+        <div class="fgrp">
+            <label>TÊN CỦA BẠN</label>
+            <input
+                type="text"
+                name="Tên"
+                placeholder="Nguyễn Văn A"
+                required>
+        </div>
+
+        <div class="fgrp">
+            <label>SỐ ĐIỆN THOẠI LIÊN HỆ</label>
+            <input
+                type="tel"
+                name="Số điện thoại"
+                placeholder="0912345678"
+                required>
+        </div>
+
+    </div>
+
+    <div class="form-row">
+
+        <div class="fgrp">
+            <label>EMAIL CỦA BẠN</label>
+            <input
+                type="email"
+                name="Email"
+                placeholder="you@email.com"
+                required>
+        </div>
+
+    </div>
+
+    <div class="fgrp">
+
+        <label>GHI CHÚ THÊM (NẾU CÓ)</label>
+
+        <textarea
+            name="message"
+            placeholder="Bạn cần BEARinmind tư vấn thêm?"></textarea>
+
+    </div>
+
+    <button
+        type="submit"
+        class="btn btn-primary"
+        style="width:100%;justify-content:center;padding:16px 30px;">
+
+        Gửi Đăng Ký →
+
+    </button>
+<div class="form-security">
+    <span class="lock-icon">🔒</span>
+    Chúng tôi cam kết không chia sẻ thông tin của bạn cho bên thứ ba
+</div>
+</form>
+
+</div>
+</div>
+<a
+  href="https://m.me/1196904980166638"
+  target="_blank"
+  rel="noopener noreferrer"
+  class="messenger-float"
+  aria-label="Chat với BEARinmind trên Messenger"
+>
+  <img
+    src="images/chat-us.png"
+    alt="Chat with us"
+  >
+</a>
+</section>
+<script>
+document.getElementById("contactForm")
+.addEventListener("submit", async function(e){
+
+    e.preventDefault();
+
+    const form = e.target;
+    const data = new FormData(form);
+
+    try{
+
+        const response = await fetch(
+            "https://formsubmit.co/ajax/bearinmind2714@gmail.com",
+            {
+                method: "POST",
+                body: data
+            }
+        );
+
+        const result = await response.json();
+
+        if(result.success === "true" || response.ok){
+
+            form.innerHTML = `
+                <div class="thank-you-box show">
+
+                    <div class="thank-icon">✓</div>
+
+                    <div class="thank-label">
+                        BEARINMIND
+                    </div>
+
+                    <h3>Cảm ơn bạn đã liên hệ!</h3>
+
+                    <p>
+                        Chúng tôi đã nhận được thông tin của bạn.
+                        Đội ngũ BEARinmind sẽ phản hồi trong thời gian sớm nhất.
+                    </p>
+
+                </div>
+            `;
+
+        }else{
+
+            alert("Không thể gửi thông tin.");
+
+        }
+
+    }catch(error){
+
+        alert("Có lỗi xảy ra. Vui lòng thử lại.");
+
+    }
+
+});
+</script>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand">
+        <a href="index.html" style="display:inline-flex;align-items:center;text-decoration:none;">
+          <img src="images/bear-logo.svg" alt="BEARinmind Academy" style="height:22px;width:auto;display:block;">
+        </a>
+      </div>
+      <p class="footer-tagline">
+        Chúng ta không thiếu năng lực, chúng ta chỉ đang bị giới hạn góc nhìn về sự thất bại.
+      </p>
+      <div class="footer-legal">
+        Công ty TNHH BEARINMIND<br>
+        62 Võ Văn Tần, Phường Xuân Hoà, TP Hồ Chí Minh<br>
+        Giấy phép kinh doanh: 0319462714
+      </div>
+    </div>
+    <div class="footer-col">
+      <h5>Liên hệ</h5>
+      <ul>
+        <li><a href="mailto:contact@bearinmind.vn">contact@bearinmind.vn</a></li>
+        <li><a href="tel:0868712714">0868 712 714</a></li>
+        <li><a href="http://www.bearinmind.vn" target="_blank">www.bearinmind.vn</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>Điều hướng</h5>
+      <ul>
+        <li><a href="index.html">About</a></li>
+        <li><a href="bearinmind-course.html">Khóa học</a></li>
+        <li><a href="bearinmind-instructors.html">Giảng viên</a></li>
+        <li><a href="bearinmind-score.html">BEARS Score</a></li>
+        <li><a href="contact-us.html">Liên hệ</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 BEARinmind Academy. All rights reserved.</span>
+    <div class="footer-links">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Use</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => io.observe(el));
+
+  // Nav on scroll
+  const nav = document.getElementById('main-nav');
+  window.addEventListener('scroll', () => {
+    nav.style.background = window.scrollY > 50
+      ? 'rgba(10,10,10,0.98)'
+      : 'rgba(10,10,10,0.94)';
+  });
+
+  // Toggle expand for audience cards
+  function toggleExpand(btn) {
+    const body = btn.previousElementSibling;
+    const isOpen = body.style.display === 'block';
+    body.style.display = isOpen ? 'none' : 'block';
+    btn.textContent = isOpen ? 'Xem thêm ›' : 'Thu gọn ‹';
+    btn.style.background = isOpen ? 'none' : 'var(--orange-muted)';
+  }
+
+  // Accordion toggle (kept for potential use)
+  function toggleAcc(item) {
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.aud-acc-item.open').forEach(el => el.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+
+
+// Ngày học - chỉ hiển thị 5 khoá gần nhất
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    const select =
+        document.getElementById("availableCourses");
+
+    const today = new Date();
+
+    let count = 0;
+    let i = 0;
+
+    while(count < 5){
+
+        const saturday = new Date(today);
+
+        saturday.setDate(today.getDate() + i);
+
+        if(saturday.getDay() === 6){
+
+            const sunday =
+                new Date(saturday);
+
+            sunday.setDate(
+                saturday.getDate() + 1
+            );
+
+            const satText =
+                saturday.toLocaleDateString("vi-VN");
+
+            const sunText =
+                sunday.toLocaleDateString("vi-VN");
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                satText + " - " + sunText;
+
+            option.textContent =
+                "Thứ 7 & Chủ Nhật: " +
+                satText +
+                " - " +
+                sunText;
+
+            select.appendChild(option);
+
+            count++;
+        }
+
+        i++;
+    }
+
+});
+
+
+</script>
+</body>
+</html>
