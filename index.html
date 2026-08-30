@@ -8,26 +8,57 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Lexend:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<link rel="stylesheet"
+<link rel="stylesheet"c
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">  
 <link rel="icon" href="favicon.ico">
 </head>
 <body>
 
+
 <!-- NAV -->
 <nav id="main-nav">
-  <a href="#" class="nav-logo">
-    <img src="images/bear-logo.svg" alt="BEARinmind Academy" style="height:25px; width:auto; display:block;">
+
+  <a href="index.html" class="nav-logo">
+    <img
+      src="images/bear-logo.svg"
+      alt="BEARinmind Academy"
+      style="height:25px; width:auto; display:block;"
+    >
   </a>
-  <ul class="nav-links">
-    <li><a href="#about">About</a></li>
-    <li><a href="bearinmind-course.html">Khóa học</a></li>
+
+  <ul class="nav-links" id="mobile-menu">
+    <li><a href="index.html#about">About</a></li>
+    <li><a href="bearinmind-course.html" class="active">Khóa học</a></li>
     <li><a href="bearinmind-instructors.html">Giảng viên</a></li>
-    <li><a href="bearinmind-score.html">BEARS Score</a></li>
+    <li><a href="bearinmind-score.html">B.E.A.R.S Score™</a></li>
     <li><a href="contact-us.html">Contact</a></li>
+
+    <!-- CTA chỉ dùng trong mobile menu -->
+    <li class="mobile-menu-cta">
+      <a href="index.html#dangkyngay">Đăng ký ngay</a>
+    </li>
   </ul>
-  <a href="index.html#dangkyngay" class="nav-cta">Đăng ký ngay</a>
+
+  <a href="index.html#dangkyngay" class="nav-cta">
+    Đăng ký ngay
+  </a>
+
+  <!-- HAMBURGER -->
+  <button
+    class="mobile-menu-btn"
+    id="mobile-menu-btn"
+    type="button"
+    aria-label="Mở menu"
+    aria-expanded="false"
+    aria-controls="mobile-menu"
+  >
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
 </nav>
+
 
 
 <!-- HERO -->
@@ -168,7 +199,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
    <div class="aud-grid">
       <!-- Card 1 -->
       <div class="aud-card reveal" style="cursor:default; aspect-ratio:unset; position:relative; border-radius:var(--r-lg); overflow:hidden; display:flex; flex-direction:column; min-height:480px;">
-        <img src="images/audience-junior-leaders.png" alt="Quản lý cấp trung" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;z-index:0;">
+        <img src="images/audience-junior-leaders.JPG"   loading="lazy"
+  decoding="async"
+ alt="Quản lý cấp trung" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;z-index:0;">
         <div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.1) 100%);z-index:1;"></div>
         <div style="position:relative;z-index:2;margin-top:auto;padding:24px;">
           <span class="ac-badge">Dành cho</span>
@@ -257,9 +290,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
       <div>
         <div class="slabel reveal">04 - Khóa học Flagship</div>
         <h2 class="course-name reveal delay-1">BREAK<br>TO<br><em>BUILD</em></h2>
-        <p class="course-sub reveal delay-2" style="font-family:var(--font-d);font-size:clamp(16px,2vw,22px);font-weight:800;font-style:normal;color:rgba(255,255,255,0.9);line-height:2;">Biến <span style="color:var(--orange);">áp lực</span> thành <span style="color:var(--orange);">siêu năng lực</span></p>
+        <p class="course-sub reveal delay-2" style="font-family:var(--font-d);font-size:clamp(16px,2vw,22px);font-weight:800;font-style:normal;color:rgba(255,255,255,0.9);line-height:2;">Xây dựng <span style="color:var(--orange);">Hệ điều hành Bản lĩnh</span></p>
         <div class="pquote reveal delay-2">
-          Mỗi khó khăn đều là nguyên liệu. Khoá học không chỉ giúp bạn đứng vững trước sóng gió mà còn biến nó thành cơ hội để bứt phá.
+          Chất lượng nhân sự bắt đầu từ nội lực. BREAK TO BUILD là khóa học chuyển hóa tư duy kéo dài 2 ngày giúp học viên nhận diện rào cản, cài đặt 5 năng lực cốt lõi B.E.A.R.S và kích hoạt chúng thành nội lực mạnh mẽ để ứng dụng trong công việc và cuộc sống.
         </div>
         <div class="reveal delay-3" style="display:flex;gap:12px;flex-wrap:wrap;">
           <a href="#dangkyngay" class="btn btn-primary">Đăng ký ngay</a>
@@ -277,7 +310,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
         <div class="feat-item reveal delay-1">
           <div class="feat-icon">📊</div>
           <div class="feat-body">
-            <h4 style="font-size:17px;">Công cụ đo lường B.E.A.R.S Score - Assessment Test</h4>
+            <h4 style="font-size:17px;">Công cụ đo lường B.E.A.R.S Score™ - Assessment Test</h4>
             <p style="font-size:15px;">Bài test tâm lý độc quyền phát triển dựa trên nền tảng Big Five OCEAN, giúp chuyển học trình và kết quả thành dữ liệu có thể đo lường.</p>
           </div>
         </div>
@@ -330,7 +363,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
           <div class="team-photo-ph" 
      style="width:120px; height:120px; border-radius:70%; overflow:hidden;">
   
-  <img src="images/mio-quang-nguyen.jpg" alt="Anh Mio Quang Nguyễn"
+  <img src="images/mio-quang-nguyen.jpg"   loading="lazy"
+  decoding="async"
+ alt="Anh Mio Quang Nguyễn"
        style="width:100%; height:100%; object-fit:cover;">
   
 </div>
@@ -344,7 +379,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 <div class="team-photo-ph" 
      style="width:120px; height:120px; border-radius:80%; overflow:hidden;">
   
-  <img src="images/mai-hien.png" alt="Chị Mai Hiền"
+  <img src="images/mai-hien.JPG" alt="Chị Mai Hiền"   loading="lazy"
+  decoding="async"
+
        style="width:100%; height:100%; object-fit:cover;">
   
 </div>
@@ -364,7 +401,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     <div class="feat-sep"></div>
     <div class="feat-logos">
       <a href="https://www.1990.agency/" target="_blank" rel="noopener" class="feat-logo-link">
-        <img src="images/partner-01.png" alt="Partner 01" style="height:50px;width:auto;display:block;">
+        <img src="images/partner-01.PNG" alt="Partner 01" style="height:50px;width:auto;display:block;">
       </a>
       <a href="[PARTNER_02_URL]" target="_blank" rel="noopener" class="feat-logo-link">
         <img src="images/partner-02.png" alt="Partner 02" style="height:50px;width:auto;display:block;">
@@ -593,7 +630,7 @@ document.getElementById("contactForm")
         <li><a href="index.html">About</a></li>
         <li><a href="bearinmind-course.html">Khóa học</a></li>
         <li><a href="bearinmind-instructors.html">Giảng viên</a></li>
-        <li><a href="bearinmind-score.html">BEARS Score</a></li>
+        <li><a href="bearinmind-score.html">B.E.A.R.S Score™</a></li>
         <li><a href="contact-us.html">Liên hệ</a></li>
       </ul>
     </div>
@@ -608,6 +645,43 @@ document.getElementById("contactForm")
 </footer>
 
 <script>
+// Mobile menu
+const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+const mobileMenu = document.getElementById("mobile-menu");
+
+if (mobileMenuBtn && mobileMenu) {
+
+  mobileMenuBtn.addEventListener("click", function () {
+
+    const isOpen = mobileMenu.classList.toggle("open");
+
+    mobileMenuBtn.classList.toggle("active", isOpen);
+
+    mobileMenuBtn.setAttribute(
+      "aria-expanded",
+      isOpen ? "true" : "false"
+    );
+
+  });
+
+  // Close menu after selecting a link
+  mobileMenu.querySelectorAll("a").forEach(function(link) {
+
+    link.addEventListener("click", function() {
+
+      mobileMenu.classList.remove("open");
+      mobileMenuBtn.classList.remove("active");
+
+      mobileMenuBtn.setAttribute(
+        "aria-expanded",
+        "false"
+      );
+
+    });
+
+  });
+
+}
   // Scroll reveal
   const reveals = document.querySelectorAll('.reveal');
   const io = new IntersectionObserver((entries) => {
@@ -640,7 +714,39 @@ document.getElementById("contactForm")
     document.querySelectorAll('.aud-acc-item.open').forEach(el => el.classList.remove('open'));
     if (!isOpen) item.classList.add('open');
   }
+/* =========================================================
+   MOBILE HEADER — HIDE LOGO ON SCROLL
+   ========================================================= */
 
+const mainNav = document.getElementById("main-nav");
+
+if (mainNav) {
+
+  function updateMobileHeader() {
+
+    if (window.innerWidth <= 960) {
+
+      if (window.scrollY > 80) {
+        mainNav.classList.add("is-scrolled");
+      } else {
+        mainNav.classList.remove("is-scrolled");
+      }
+
+    } else {
+
+      mainNav.classList.remove("is-scrolled");
+
+    }
+  }
+
+  window.addEventListener("scroll", updateMobileHeader, {
+    passive: true
+  });
+
+  window.addEventListener("resize", updateMobileHeader);
+
+  updateMobileHeader();
+}
 
 // Ngày học - chỉ hiển thị 5 khoá gần nhất
 
