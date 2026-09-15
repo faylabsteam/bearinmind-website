@@ -541,6 +541,10 @@
   </div>
   <div class="version-badge">Rubric v2.2 · Template v2.2</div>
 </header>
+<div id="batch-elapsed-bar" style="display:none;padding:10px 32px;background:#17171e;border-bottom:1px solid var(--border);font-family:'SF Mono','Menlo',monospace;font-size:12px;">
+  ⏱ <strong>Đã chạy:</strong> <span id="batchElapsed">0m 0s</span>
+  <span id="batchElapsedStage" style="color:var(--accent2);margin-left:18px;"></span>
+</div>
 
 <div class="layout">
 
@@ -767,6 +771,13 @@
 // ═══════════════════════════════════════════════════════════════
 
 // ── State ──────────────────────────────────────────────────────
+const BATCH_STORAGE_KEY = 'bearsinmind_batch_state_v2_2';
+const BATCH_POLL_MS = 120000;
+const BATCH_REQUEST_TIMEOUT_MS = 30000;
+let batchPollTimer = null;
+let batchPollBusy = false;
+let batchPollAttempt = 0;
+
 const state = {
   apiKey: '',
   refText: '',
@@ -777,6 +788,10 @@ const state = {
   batchStage: 'scoring', // scoring → narrative
   batchTexts: {},
   batchScoring: {},
+  batchErrors: {},
+  batchMeta: {},
+  batchReports: {},
+  batchRetryCount: {},
   logCount: 0,
 };
 
@@ -1242,11 +1257,13 @@ function loadConfigFile(type, input) {
       document.getElementById('refName').textContent = file.name;
       document.getElementById('refStatus').textContent = '✅';
       log(`Rubric loaded: ${file.name} (${Math.round(file.size/1024)}KB)`, 'ok');
+      if (state.batchId) saveBatchState('Rubric');
     } else {
       state.tplText = e.target.result;
       document.getElementById('tplName').textContent = file.name;
       document.getElementById('tplStatus').textContent = '✅';
       log(`Template loaded: ${file.name} (${Math.round(file.size/1024)}KB)`, 'ok');
+      if (state.batchId) saveBatchState('Template');
     }
   };
   reader.readAsText(file, 'UTF-8');
@@ -1273,14 +1290,340 @@ function validate() {
   return true;
 }
 
-// ── Parse JSON ────────────────────────────────────────────────
+// ── Parse JSON / Batch result helpers ─────────────────────────
 function parseJSON(text) {
-  const cleaned = text.replace(/```json|```/g, '').trim();
-  try { return JSON.parse(cleaned); } catch(_) {
-    const m = cleaned.match(/\{[\s\S]*\}/);
-    if (m) try { return JSON.parse(m[0]); } catch(__) {}
-    return null;
+  if (text && typeof text === 'object') return text;
+  const cleaned = String(text ?? '').replace(/^\uFEFF/, '').replace(/```json|```/g, '').trim();
+  try { return JSON.parse(cleaned); } catch(_) {}
+  const m = cleaned.match(/\{[\s\S]*\}/);
+  if (m) try { return JSON.parse(m[0]); } catch(__) {}
+  return null;
+}
+
+// Anthropic batch /results thường trả JSONL, nhưng một số proxy có thể
+// trả array/object hoặc JSON có newline bên trong content. Không split mù theo "\n".
+function splitBatchResultRecords(text) {
+  if (Array.isArray(text)) return text;
+  if (text && typeof text === 'object') return [text];
+
+  const raw = String(text ?? '').trim();
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && typeof parsed === 'object') return [parsed];
+  } catch (_) {}
+
+  const records = [];
+  let i = 0;
+  while (i < raw.length) {
+    while (i < raw.length && /[\s,\r\n]/.test(raw[i])) i++;
+    if (i >= raw.length) break;
+
+    if (raw[i] !== '{') {
+      const nl = raw.indexOf('\n', i);
+      if (nl < 0) break;
+      i = nl + 1;
+      continue;
+    }
+
+    const start = i;
+    let depth = 0, inString = false, escaped = false;
+    let end = -1;
+
+    for (; i < raw.length; i++) {
+      const ch = raw[i];
+      if (inString) {
+        if (escaped) { escaped = false; continue; }
+        if (ch === '\\\\') { escaped = true; continue; }
+        if (ch === '"') inString = false;
+      } else {
+        if (ch === '"') inString = true;
+        else if (ch === '{') depth++;
+        else if (ch === '}') {
+          depth--;
+          if (depth === 0) { end = i + 1; break; }
+        }
+      }
+    }
+
+    if (end < 0) break;
+    const candidate = raw.slice(start, end);
+    try {
+      const obj = JSON.parse(candidate);
+      records.push(obj);
+    } catch (_) {
+      // Không cố sửa nội dung JSON của Claude ở đây; giữ lỗi rõ ràng.
+    }
+    i = end;
   }
+  return records;
+}
+
+function validateScoringData(d) {
+  if (!d || typeof d !== 'object') return 'Không phải object JSON';
+  if (!d.facet_level || typeof d.facet_level !== 'object') return 'Thiếu facet_level';
+  if (!d.facet_confidence || typeof d.facet_confidence !== 'object') return 'Thiếu facet_confidence';
+  if (!d.likert_answers || typeof d.likert_answers !== 'object') return 'Thiếu likert_answers';
+
+  for (const f of ALL_FACETS) {
+    const v = Number(d.facet_level[f]);
+    if (![20,50,80].includes(v)) return `facet_level.${f} không hợp lệ`;
+    if (!['confirmed','tentative','ghi chú','shadow','ambiguous'].includes(d.facet_confidence[f])) {
+      return `facet_confidence.${f} không hợp lệ`;
+    }
+  }
+  for (const idx of IDX_KEYS) {
+    for (const item of INDEX_ITEMS[idx]) {
+      const v = Number(d.likert_answers[item]);
+      if (![1,2,3,4,5].includes(v)) return `likert_answers.${item} không hợp lệ`;
+    }
+  }
+  return null;
+}
+
+function validateNarrativeData(d) {
+  if (!d || typeof d !== 'object') return 'Không phải object JSON';
+  if (!d.template_vars || typeof d.template_vars !== 'object') return 'Thiếu template_vars';
+  return null;
+}
+
+// ── Persistent batch state ────────────────────────────────────
+// Lưu intermediate state để F5 không làm mất Batch ID, bài làm,
+// scoring, lỗi và Batch 2. Config cũng được lưu để có thể tự tiếp tục
+// sau refresh; API key vẫn chỉ ở sessionStorage.
+function serializableBatchState() {
+  return {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    batchId: state.batchId,
+    batchStage: state.batchStage,
+    batchTexts: state.batchTexts,
+    batchScoring: state.batchScoring,
+    batchErrors: state.batchErrors,
+    batchMeta: state.batchMeta,
+    batchReports: state.batchReports,
+    batchRetryCount: state.batchRetryCount,
+    refText: state.refText,
+    tplText: state.tplText,
+    inputFileNames: state.inputFiles.map(f => f.name),
+  };
+}
+
+function saveBatchState(reason='') {
+  if (!state.batchId && !Object.keys(state.batchScoring).length) return;
+  try {
+    localStorage.setItem(BATCH_STORAGE_KEY, JSON.stringify(serializableBatchState()));
+    if (reason) log(`💾 State saved${reason ? ` · ${reason}` : ''}`, 'dim');
+  } catch (e) {
+    log(`⚠️ Không lưu được state vào trình duyệt: ${e.message}`, 'warn');
+  }
+}
+
+function clearBatchState() {
+  localStorage.removeItem(BATCH_STORAGE_KEY);
+  state.batchId = null;
+  state.batchStage = 'scoring';
+  state.batchTexts = {};
+  state.batchScoring = {};
+  state.batchErrors = {};
+  state.batchMeta = {};
+  state.batchReports = {};
+  state.batchRetryCount = {};
+}
+
+function restoreBatchState() {
+  try {
+    const raw = localStorage.getItem(BATCH_STORAGE_KEY);
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    if (!saved || saved.version !== 1 || !saved.batchId) return false;
+
+    state.batchId = saved.batchId;
+    state.batchStage = saved.batchStage || 'scoring';
+    state.batchTexts = saved.batchTexts || {};
+    state.batchScoring = saved.batchScoring || {};
+    state.batchErrors = saved.batchErrors || {};
+    state.batchMeta = saved.batchMeta || {};
+    state.batchReports = saved.batchReports || {};
+    state.batchRetryCount = saved.batchRetryCount || {};
+    if (saved.refText) state.refText = saved.refText;
+    if (saved.tplText) state.tplText = saved.tplText;
+
+    document.getElementById('batchIdInput').value = state.batchId;
+    if (state.refText) {
+      document.getElementById('refName').textContent = 'Rubric đã lưu trong state';
+      document.getElementById('refStatus').textContent = '💾';
+    }
+    if (state.tplText) {
+      document.getElementById('tplName').textContent = 'Template đã lưu trong state';
+      document.getElementById('tplStatus').textContent = '💾';
+    }
+    const names = saved.inputFileNames || Object.keys(state.batchTexts);
+    document.getElementById('fileCount').textContent =
+      names.length ? `${names.length} bài (resumed)` : 'Bài làm đã lưu trong state';
+    document.getElementById('statTotal').textContent = names.length || Object.keys(state.batchTexts).length;
+
+    log(`↻ Resuming Batch · ${state.batchStage === 'scoring' ? 'Batch 1' : 'Batch 2'} · ${state.batchId}`, 'warn');
+    log(`   State saved: ${saved.savedAt || 'unknown'}`, 'dim');
+    return true;
+  } catch (e) {
+    log(`⚠️ Không restore được state cũ: ${e.message}`, 'warn');
+    return false;
+  }
+}
+
+function stopBatchPolling() {
+  if (batchPollTimer) {
+    clearTimeout(batchPollTimer);
+    batchPollTimer = null;
+  }
+  batchPollBusy = false;
+}
+
+function formatElapsed(ms) {
+  const sec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  return h ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+}
+
+let batchElapsedTimer = null;
+
+function updateBatchElapsedUI() {
+  const bar = document.getElementById('batch-elapsed-bar');
+  const out = document.getElementById('batchElapsed');
+  const stageOut = document.getElementById('batchElapsedStage');
+  if (!bar || !out) return;
+  const startRaw = state.batchMeta?.batch1SubmittedAt || state.batchMeta?.submittedAt;
+  if (!startRaw || !state.batchId) {
+    bar.style.display = 'none';
+    if (batchElapsedTimer) { clearInterval(batchElapsedTimer); batchElapsedTimer = null; }
+    return;
+  }
+  const elapsed = Date.now() - new Date(startRaw).getTime();
+  out.textContent = formatElapsed(elapsed);
+  stageOut.textContent = state.batchStage === 'scoring'
+    ? 'Batch 1 · Scoring'
+    : (state.batchMeta?.batch2RetryIds?.length ? 'Batch 2 · Retry Render' : 'Batch 2 · Narrative');
+  bar.style.display = 'block';
+}
+
+function startBatchElapsedTimer() {
+  if (batchElapsedTimer) clearInterval(batchElapsedTimer);
+  updateBatchElapsedUI();
+  batchElapsedTimer = setInterval(updateBatchElapsedUI, 1000);
+}
+
+function stopBatchElapsedTimer() {
+  if (batchElapsedTimer) clearInterval(batchElapsedTimer);
+  batchElapsedTimer = null;
+  updateBatchElapsedUI();
+}
+
+function updateBatchProgressFromStatus(status) {
+  const counts = status?.request_counts || {};
+  const total = Number(counts.total || Object.keys(state.batchTexts).length || Object.keys(state.batchScoring).length || 0);
+  const done = Number(counts.succeeded || 0) + Number(counts.errored || 0) +
+               Number(counts.canceled || 0) + Number(counts.expired || 0);
+  const processing = Number(counts.processing || 0);
+  const submittedAt = state.batchMeta?.submittedAt ? new Date(state.batchMeta.submittedAt).getTime() : Date.now();
+  const elapsed = Date.now() - submittedAt;
+
+  let eta = 'ETA chưa đủ dữ liệu';
+  if (done > 0 && done < total && elapsed > 0) {
+    const perDone = elapsed / done;
+    eta = `ETA ~${formatElapsed(Math.max(0, perDone * (total - done)))}`;
+  } else if (done >= total && total > 0) {
+    eta = 'Hoàn tất';
+  }
+
+  const stageName = state.batchStage === 'scoring' ? 'Batch 1 · Scoring' : 'Batch 2 · Narrative';
+
+  // Tổng thời gian của toàn bộ pipeline, tính từ lúc Submit Batch 1.
+  // Khác với `elapsed` ở trên (chỉ tính thời gian của batch hiện tại),
+  // giá trị này giúp người dùng biết tổng thời gian đã chạy kể từ đầu.
+  const pipelineStartRaw = state.batchMeta?.batch1SubmittedAt || state.batchMeta?.submittedAt;
+  const pipelineStart = pipelineStartRaw ? new Date(pipelineStartRaw).getTime() : Date.now();
+  const totalElapsed = Math.max(0, Date.now() - pipelineStart);
+  const label = `${stageName} — ${done}/${total} bài · ${status?.processing_status || 'unknown'} · ${eta} · Tổng: ${formatElapsed(totalElapsed)}`;
+  setProgress(done, total, label);
+
+  log(`⏱ Đã chạy ${formatElapsed(elapsed)} · ${eta}${processing ? ` · ${processing} đang xử lý` : ''}`, 'dim');
+}
+
+async function fetchWithTimeout(url, options={}, timeoutMs=BATCH_REQUEST_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {...options, signal: controller.signal});
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error(`Request timeout sau ${Math.round(timeoutMs/1000)}s`);
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function getBatchStatus(batchId, proxyUrl, headers) {
+  const res = await fetchWithTimeout(`${proxyUrl}/status/${batchId}`, {headers});
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Status HTTP ${res.status}: ${err.error?.message || res.statusText}`);
+  }
+  return await res.json();
+}
+
+async function startBatchPolling() {
+  stopBatchPolling();
+  if (!state.batchId) return;
+
+  batchPollAttempt = 0;
+  const poll = async () => {
+    if (!state.batchId || batchPollBusy) return;
+    batchPollBusy = true;
+    batchPollAttempt++;
+    const currentId = state.batchId;
+    const stage = state.batchStage;
+
+    try {
+      const proxyUrl = (document.getElementById('proxyUrl').value || '').trim();
+      const cleanKey = (state.apiKey || document.getElementById('apiKey').value || '').replace(/[^\x20-\x7E]/g, '').trim();
+      if (!proxyUrl || !cleanKey) throw new Error('Thiếu Proxy URL hoặc API key để Poll.');
+
+      const hdrs = new Headers();
+      hdrs.append('x-bears-api-key', cleanKey);
+
+      log(`🔎 Kiểm tra trạng thái ${stage === 'scoring' ? 'Batch 1' : 'Batch 2'} (lần #${batchPollAttempt})...`, 'dim');
+      const status = await getBatchStatus(currentId, proxyUrl, hdrs);
+
+      if (currentId !== state.batchId || stage !== state.batchStage) return;
+      updateBatchProgressFromStatus(status);
+
+      if (status.processing_status === 'ended') {
+        log(`🏁 ${stage === 'scoring' ? 'Batch 1' : 'Batch 2'} đã completed — tự động Collect.`, 'ok');
+        batchPollBusy = false;
+        await collectBatch(currentId, true);
+        return;
+      }
+
+      saveBatchState('poll');
+    } catch (e) {
+      log(`⚠️ Auto-Poll tạm lỗi: ${e.message}`, 'warn');
+      log(`   Sẽ thử lại sau ${Math.round(BATCH_POLL_MS/1000)}s.`, 'dim');
+    } finally {
+      batchPollBusy = false;
+    }
+
+    if (state.batchId) {
+      batchPollTimer = setTimeout(poll, BATCH_POLL_MS);
+    }
+  };
+
+  log(`🔄 Auto-Poll ${state.batchStage === 'scoring' ? 'Batch 1' : 'Batch 2'} mỗi ${Math.round(BATCH_POLL_MS/1000)}s.`, 'info');
+  await poll();
 }
 
 // ── Call Claude API ───────────────────────────────────────────
@@ -1399,12 +1742,17 @@ async function runRealtime() {
 // ── Batch mode: submit ─────────────────────────────────────────
 async function submitBatch() {
   if (!validate()) return;
+  stopBatchPolling();
   setButtons(true);
-  log(`▶ Chuẩn bị batch ${state.inputFiles.length} bài...`, 'info');
+  log(`▶ Chuẩn bị Batch 1 · ${state.inputFiles.length} bài...`, 'info');
 
   try {
     const requests = [];
     state.batchTexts = {};
+    state.batchScoring = {};
+    state.batchErrors = {};
+    state.batchStage = 'scoring';
+
     for (const file of state.inputFiles) {
       const text = await readFile(file);
       const customId = file.name.replace('.txt','').replace(/[^a-zA-Z0-9_\-]/g, '_').substring(0,64);
@@ -1434,7 +1782,7 @@ async function submitBatch() {
     batchHdrs.append('Content-Type', 'application/json');
     batchHdrs.append('x-bears-api-key', cleanKeyB);
 
-    const res = await fetch(`${proxyUrl}/submit`, {
+    const res = await fetchWithTimeout(`${proxyUrl}/submit`, {
       method: 'POST',
       headers: batchHdrs,
       body: new TextEncoder().encode(JSON.stringify({ requests })),
@@ -1447,42 +1795,53 @@ async function submitBatch() {
 
     const batch = await res.json();
     state.batchId = batch.id;
+    state.batchStage = 'scoring';
+    state.batchReports = {};
+    state.batchRetryCount = {};
+    state.batchMeta = {
+      batch1Id: batch.id,
+      batch2Id: null,
+      submittedAt: new Date().toISOString(),
+      batch1SubmittedAt: new Date().toISOString(),
+      batch2SubmittedAt: null,
+    };
     document.getElementById('batchIdInput').value = batch.id;
 
     const est = estimateBatchTokens(state.inputFiles, state.refText.length, state.tplText.length);
     log(`   Est. batch tokens: input~${est.totalInput.toLocaleString()} output~${est.totalOutput.toLocaleString()}`, 'dim');
-    log(`✅ Batch submitted! (Call 1a, chỉ chấm/diễn giải)`, 'ok');
-    log(`   Batch ID: ${batch.id}`, 'ok');
+    log(`✅ Batch 1 submitted!`, 'ok');
+    log(`   Batch 1 ID: ${batch.id}`, 'ok');
     log(`   Request count: ${batch.request_counts?.processing || state.inputFiles.length}`, 'dim');
-    log(`   Trạng thái: ${batch.processing_status}`, 'dim');
-    log(`⏳ Anthropic đang xử lý Batch 1 (chấm điểm). Khi xong, Collect sẽ tự tạo Batch 2 để viết narrative cho toàn bộ bài.`, 'warn');
 
-    const blob = new Blob([`Batch ID: ${batch.id}\nSubmitted: ${new Date().toISOString()}\nFiles: ${state.inputFiles.map(f=>f.name).join(', ')}`], {type:'text/plain'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `bears_batch_${batch.id}.txt`;
-    a.click();
-    log(`📄 Đã tải file chứa Batch ID về máy.`, 'info');
+    saveBatchState('Batch 1 ID + bài làm');
+    log(`💾 Đã lưu Batch 1 ID + bài làm + state vào trình duyệt.`, 'ok');
+    startBatchElapsedTimer();
+
+    setButtons(false);
+    startBatchPolling();
+    return;
 
   } catch(e) {
-    log(`❌ Submit thất bại: ${e.message}`, 'err');
+    log(`❌ Submit Batch 1 thất bại: ${e.message}`, 'err');
+    setButtons(false);
   }
-
-  setButtons(false);
 }
 
 // ── Batch mode: collect ────────────────────────────────────────
-async function collectBatch() {
-  const batchId = document.getElementById('batchIdInput').value.trim();
-  if (!batchId) { log('❌ Nhập Batch ID trước', 'err'); return; }
-  const key = document.getElementById('apiKey').value.trim();
+async function collectBatch(batchIdOverride=null, automatic=false) {
+  const batchId = batchIdOverride || document.getElementById('batchIdInput').value.trim();
+  if (!batchId) { log('❌ Không có Batch ID để collect', 'err'); return; }
+  const key = document.getElementById('apiKey').value.trim() || state.apiKey;
   if (!key) { log('❌ Nhập API key', 'err'); return; }
   if (!state.tplText) { log('❌ Load Template file trước', 'err'); return; }
   if (!state.refText) { log('❌ Load Rubric v2.2 trước', 'err'); return; }
   state.apiKey = key;
 
+  if (automatic) log(`▶ Auto-Collect ${state.batchStage === 'scoring' ? 'Batch 1' : 'Batch 2'} · ${batchId}`, 'info');
+  else log(`▶ Collect batch ${batchId} (${state.batchStage === 'scoring' ? 'Batch 1 — scoring' : 'Batch 2 — narrative'})`, 'info');
+
   setButtons(true);
-  log(`▶ Collect batch ${batchId} (${state.batchStage === 'scoring' ? 'Batch 1 — scoring' : 'Batch 2 — narrative'})`, 'info');
+  stopBatchPolling();
 
   try {
     const proxyUrl = (document.getElementById('proxyUrl').value || '').trim();
@@ -1494,53 +1853,73 @@ async function collectBatch() {
       return h;
     };
 
-    const statusRes = await fetch(`${proxyUrl}/status/${batchId}`, { headers: getHdrs() });
-    const status = await statusRes.json();
+    const status = await getBatchStatus(batchId, proxyUrl, getHdrs());
     log(`   Status: ${status.processing_status}`, 'dim');
-    log(`   Counts: ${JSON.stringify(status.request_counts)}`, 'dim');
+    log(`   Counts: ${JSON.stringify(status.request_counts || {})}`, 'dim');
+    updateBatchProgressFromStatus(status);
 
     if (status.processing_status !== 'ended') {
-      log(`⏳ Batch chưa xong (${status.processing_status}). Thử lại sau.`, 'warn');
-      setButtons(false); return;
+      log(`⏳ Batch chưa xong (${status.processing_status}). Auto-Poll sẽ tiếp tục.`, 'warn');
+      state.batchId = batchId;
+      saveBatchState('Batch chưa hoàn thành');
+      setButtons(false);
+      startBatchPolling();
+      return;
     }
 
-    const resultsRes = await fetch(`${proxyUrl}/results/${batchId}`, { headers: getHdrs() });
-    const text = await resultsRes.text();
-    const resultLines = text.trim().split('\n').filter(Boolean);
+    const resultsRes = await fetchWithTimeout(`${proxyUrl}/results/${batchId}`, {headers:getHdrs()});
+    if (!resultsRes.ok) {
+      const err = await resultsRes.text().catch(() => '');
+      throw new Error(`Results HTTP ${resultsRes.status}: ${err.slice(0,300)}`);
+    }
+    const rawResults = await resultsRes.text();
+    const resultLines = splitBatchResultRecords(rawResults);
     log(`   Received ${resultLines.length} results`, 'dim');
 
-    // ── Batch 1: collect scoring → submit Batch 2 narrative ─────
+    // ── Batch 1: collect scoring → save scoring/errors → submit Batch 2
     if (state.batchStage === 'scoring') {
       const narrativeRequests = [];
       state.batchScoring = {};
+      state.batchErrors = {};
 
-      for (const line of resultLines) {
-        const item = JSON.parse(line);
-        if (item.result?.type !== 'succeeded') {
-          log(`❌ ${item.custom_id}: ${item.result?.error?.message || 'failed'}`, 'err');
+      const expectedIds = Object.keys(state.batchTexts);
+
+      for (const item of resultLines) {
+        const customId = item?.custom_id;
+        if (!customId) {
+          state.batchErrors[`unknown_${Object.keys(state.batchErrors).length+1}`] = 'Result không có custom_id';
+          log(`❌ Result không có custom_id`, 'err');
           continue;
         }
 
-        const rawText = item.result.message.content[0].text;
+        if (item.result?.type !== 'succeeded') {
+          const msg = item.result?.error?.message || 'failed';
+          state.batchErrors[customId] = msg;
+          log(`❌ ${customId}: ${msg}`, 'err');
+          continue;
+        }
+
+        const rawText = item.result?.message?.content?.[0]?.text || '';
         const scoringData = parseJSON(rawText);
-        if (!scoringData?.facet_level || !scoringData?.likert_answers) {
-          log(`❌ ${item.custom_id}: parse JSON thất bại hoặc thiếu facet_level/likert_answers`, 'err');
+        const validationError = validateScoringData(scoringData);
+        if (validationError) {
+          state.batchErrors[customId] = validationError;
+          log(`❌ ${customId}: ${validationError}`, 'err');
           continue;
         }
 
         const derived = computeAll(scoringData);
-        const jsVars = buildJsVars(scoringData, derived);
         const computedContext = buildComputedContext(derived);
-        const sourceText = state.batchTexts[item.custom_id] || '';
+        const sourceText = state.batchTexts[customId] || '';
 
-        state.batchScoring[item.custom_id] = {
+        state.batchScoring[customId] = {
           scoringData,
           derived,
-          file: item.custom_id
+          file: customId
         };
 
         narrativeRequests.push({
-          custom_id: item.custom_id,
+          custom_id: customId,
           params: {
             model: CLAUDE_MODEL,
             max_tokens: 12000,
@@ -1557,9 +1936,21 @@ async function collectBatch() {
         });
       }
 
-      if (!narrativeRequests.length) throw new Error('Không có bài hợp lệ để tạo Batch 2.');
+      // Các bài không xuất hiện trong results cũng được ghi rõ, không silently drop.
+      for (const id of expectedIds) {
+        if (!state.batchScoring[id] && !state.batchErrors[id]) {
+          state.batchErrors[id] = 'Không có result trả về từ Batch 1';
+          log(`❌ ${id}: không có result trả về`, 'err');
+        }
+      }
 
-      const res2 = await fetch(`${proxyUrl}/submit`, {
+      saveBatchState('Batch 1 results + scoring + error list');
+
+      if (!narrativeRequests.length) {
+        throw new Error('Không có bài hợp lệ để tạo Batch 2. State lỗi đã được lưu.');
+      }
+
+      const res2 = await fetchWithTimeout(`${proxyUrl}/submit`, {
         method: 'POST',
         headers: new Headers({ 'Content-Type':'application/json', 'x-bears-api-key': cleanKey }),
         body: new TextEncoder().encode(JSON.stringify({ requests: narrativeRequests }))
@@ -1572,74 +1963,177 @@ async function collectBatch() {
       const batch2 = await res2.json();
       state.batchId = batch2.id;
       state.batchStage = 'narrative';
+      state.batchMeta.batch2Id = batch2.id;
+      state.batchMeta.batch2SubmittedAt = new Date().toISOString();
+      state.batchMeta.submittedAt = state.batchMeta.batch2SubmittedAt;
+      state.batchMeta.batch2RetryIds = [];
       document.getElementById('batchIdInput').value = batch2.id;
 
-      log(`✅ Batch 1 collected: ${narrativeRequests.length} bài hợp lệ.`, 'ok');
-      log(`🚀 Đã submit Batch 2 (Call 1b — narrative): ${batch2.id}`, 'ok');
-      log(`⏳ Khi Batch 2 kết thúc, bấm Collect lần nữa để tạo 100 report bằng JS.`, 'warn');
-
-      const blob = new Blob([
-        `Batch 1: ${batchId}\nBatch 2: ${batch2.id}\nCreated: ${new Date().toISOString()}\nRequests: ${narrativeRequests.length}`
-      ], {type:'text/plain'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `bears_batch_${batch2.id}_stage2.txt`;
-      a.click();
+      saveBatchState('Batch 2 ID');
+      log(`💾 Đã lưu tiếp Batch 2 ID: ${batch2.id}`, 'ok');
+      log(`🚀 Batch 2 submitted · ${narrativeRequests.length} bài`, 'ok');
+      startBatchElapsedTimer();
+      log(`⏳ Auto-Poll Batch 2 sẽ kiểm tra mỗi ${Math.round(BATCH_POLL_MS/1000)}s.`, 'warn');
 
       setButtons(false);
+      startBatchPolling();
       return;
     }
 
-    // ── Batch 2: collect narrative → JS fill HTML ───────────────
-    let done = 0, errors = 0;
-    state.results = [];
-    document.getElementById('resultsBody').innerHTML = '';
-    document.getElementById('resultsBadge').textContent = '0';
+    // ── Batch 2: collect narrative → JS fill HTML → retry lỗi → ZIP ready
+    const isRetryBatch = Array.isArray(state.batchMeta?.batch2RetryIds) && state.batchMeta.batch2RetryIds.length > 0;
+    const targetIds = isRetryBatch
+      ? state.batchMeta.batch2RetryIds
+      : Object.keys(state.batchScoring);
 
-    for (const line of resultLines) {
-      const item = JSON.parse(line);
-      const saved = state.batchScoring[item.custom_id];
+    let done = 0, errors = 0;
+
+    if (!isRetryBatch) {
+      state.batchReports = state.batchReports || {};
+      state.batchErrors = state.batchErrors || {};
+    }
+
+    for (const item of resultLines) {
+      const customId = item?.custom_id;
+      if (!customId || !targetIds.includes(customId)) continue;
+
+      const saved = state.batchScoring[customId];
       if (!saved) {
-        log(`❌ ${item.custom_id}: không tìm thấy dữ liệu Batch 1 trong phiên hiện tại.`, 'err');
-        errors++; continue;
+        state.batchErrors[customId] = 'Không tìm thấy dữ liệu Batch 1 trong state.';
+        log(`❌ ${customId}: không tìm thấy dữ liệu Batch 1 trong state.`, 'err');
+        errors++;
+        continue;
       }
+
       if (item.result?.type !== 'succeeded') {
-        log(`❌ ${item.custom_id}: ${item.result?.error?.message || 'failed'}`, 'err');
-        errors++; continue;
+        const msg = item.result?.error?.message || 'failed';
+        state.batchErrors[customId] = msg;
+        log(`❌ ${customId}: ${msg}`, 'err');
+        errors++;
+        continue;
       }
 
       try {
-        const varsData = parseJSON(item.result.message.content[0].text);
-        if (!varsData?.template_vars) throw new Error('Batch 2 parse JSON thất bại');
+        const varsData = parseJSON(item.result?.message?.content?.[0]?.text || '');
+        const validationError = validateNarrativeData(varsData);
+        if (validationError) throw new Error(validationError);
 
         const jsVars = buildJsVars(saved.scoringData, saved.derived);
         const finalVars = { ...jsVars, ...varsData.template_vars };
         const html = fillTemplate(state.tplText, finalVars);
         const sd = buildResultRecord(saved.scoringData, saved.derived);
 
-        state.results.push({
+        state.batchReports[customId] = {
           sd,
           mentorText: varsData.mentor_text || '',
           html,
-          file: item.custom_id
-        });
-        addResultRow(sd, state.results.length - 1);
+          file: customId
+        };
+        delete state.batchErrors[customId];
         done++;
+        log(`✅ Render thành công: ${customId}`, 'ok');
       } catch (e2) {
-        log(`❌ Render HTML thất bại (${item.custom_id}): ${e2.message}`, 'err');
+        state.batchErrors[customId] = `Render HTML thất bại: ${e2.message}`;
+        log(`❌ Render HTML thất bại (${customId}): ${e2.message}`, 'err');
         errors++;
       }
     }
 
-    log(`── Batch 2 xong: ${done} report, ${errors} lỗi ──`, done > 0 ? 'ok' : 'warn');
-    if (state.results.length > 0) document.getElementById('btnDownload').disabled = false;
-    state.batchStage = 'scoring';
+    // Những request retry nhưng không trả result vẫn được ghi lỗi.
+    for (const id of targetIds) {
+      if (!resultLines.some(x => x?.custom_id === id)) {
+        state.batchErrors[id] = 'Batch 2 không trả result';
+        log(`❌ ${id}: Batch 2 không trả result`, 'err');
+        errors++;
+      }
+    }
+
+    // Nếu render/parse lỗi, tự động tạo một Batch 2 retry chỉ cho các file lỗi.
+    const failedIds = Object.keys(state.batchScoring).filter(id => {
+      return !state.batchReports[id] && Number(state.batchRetryCount[id] || 0) < 2;
+    });
+
+    if (failedIds.length > 0) {
+      for (const id of failedIds) state.batchRetryCount[id] = Number(state.batchRetryCount[id] || 0) + 1;
+
+      const retryRequests = failedIds.map(customId => {
+        const saved = state.batchScoring[customId];
+        const sourceText = state.batchTexts[customId] || '';
+        const computedContext = buildComputedContext(saved.derived);
+        return {
+          custom_id: customId,
+          params: {
+            model: CLAUDE_MODEL,
+            max_tokens: 12000,
+            system: SYSTEM_VARS,
+            messages: [{
+              role:'user',
+              content: [
+                { type:'text', text:'=== BEARS SCORE RUBRIC v2.2 ===\\n\\n' + state.refText, cache_control:{type:'ephemeral'} },
+                { type:'text', text:'=== DỮ LIỆU ĐÃ CHẤM VÀ ĐÃ TÍNH ===\\n\\n' + JSON.stringify({ scoring:saved.scoringData, computed:computedContext }, null, 2) },
+                { type:'text', text:'=== BÀI LÀM GỐC ===\\n\\n' + sourceText }
+              ]
+            }]
+          }
+        };
+      });
+
+      const resRetry = await fetchWithTimeout(`${proxyUrl}/submit`, {
+        method:'POST',
+        headers:new Headers({'Content-Type':'application/json','x-bears-api-key':cleanKey}),
+        body:new TextEncoder().encode(JSON.stringify({requests:retryRequests}))
+      });
+      if (!resRetry.ok) {
+        const err = await resRetry.json().catch(() => ({}));
+        throw new Error(`Submit Retry Batch 2 thất bại: HTTP ${resRetry.status}: ${err.error?.message || resRetry.statusText}`);
+      }
+
+      const retryBatch = await resRetry.json();
+      state.batchId = retryBatch.id;
+      state.batchStage = 'narrative';
+      state.batchMeta.batch2RetryIds = failedIds;
+      state.batchMeta.batch2RetryId = retryBatch.id;
+      state.batchMeta.submittedAt = new Date().toISOString();
+      document.getElementById('batchIdInput').value = retryBatch.id;
+
+      saveBatchState(`Retry Render · ${failedIds.length} file lỗi`);
+      log(`🔁 Tự động Retry Render: ${failedIds.length} file lỗi`, 'warn');
+      log(`   Retry Batch 2 ID: ${retryBatch.id}`, 'ok');
+      log(`⏳ Auto-Poll Retry mỗi ${Math.round(BATCH_POLL_MS/1000)}s.`, 'warn');
+
+      setButtons(false);
+      startBatchElapsedTimer();
+      startBatchPolling();
+      return;
+    }
+
+    // Không còn lỗi chưa retry được. Hiển thị toàn bộ report đã tạo.
+    state.results = Object.values(state.batchReports || {});
+    document.getElementById('resultsBody').innerHTML = '';
+    document.getElementById('resultsBadge').textContent = '0';
+    state.results.forEach((r, i) => addResultRow(r.sd, i));
+
+    const finalErrors = Object.keys(state.batchScoring).filter(id => !state.batchReports[id]);
+    const finalDone = state.results.length;
+    log(`── Batch 2 completed: ${finalDone} report, ${finalErrors.length} lỗi ──`, finalDone > 0 ? 'ok' : 'warn');
+
+    if (finalDone > 0) {
+      document.getElementById('btnDownload').disabled = false;
+      log(`📦 Reports đã sẵn sàng. Bấm Download ZIP.`, 'ok');
+    }
+
+    clearBatchState();
+    stopBatchElapsedTimer();
+    setButtons(false);
+    return;
 
   } catch(e) {
     log(`❌ Collect thất bại: ${e.message}`, 'err');
+    state.batchId = batchId;
+    saveBatchState('Collect error — giữ state để resume');
+    setButtons(false);
+    startBatchPolling();
   }
-
-  setButtons(false);
 }
 
 // ── Results table ─────────────────────────────────────────────
@@ -1767,10 +2261,28 @@ dropZone.addEventListener('drop', e => {
   if (files.length > 0) log(`Đã load ${files.length} bài làm (drag & drop)`, 'ok');
 });
 
-// Load API key từ sessionStorage nếu có
+// Load API key từ sessionStorage nếu có + resume batch state sau F5
 window.addEventListener('load', () => {
   const saved = sessionStorage.getItem('bears_api_key');
-  if (saved) document.getElementById('apiKey').value = saved;
+  if (saved) {
+    document.getElementById('apiKey').value = saved;
+    state.apiKey = saved;
+  }
+
+  const resumed = restoreBatchState();
+  if (resumed) {
+    // Proxy URL được load ngay bên dưới từ sessionStorage trước khi poll.
+    setTimeout(() => {
+      const proxy = (document.getElementById('proxyUrl').value || '').trim();
+      if (proxy && state.apiKey) {
+        log(`↻ Resuming Batch: tự động tiếp tục Poll Batch ID cũ.`, 'warn');
+        startBatchElapsedTimer();
+        startBatchPolling();
+      } else {
+        log(`⚠️ State đã được khôi phục nhưng thiếu API key hoặc Proxy URL. Nhập lại để tiếp tục.`, 'warn');
+      }
+    }, 0);
+  }
 });
 document.getElementById('apiKey').addEventListener('change', e => {
   sessionStorage.setItem('bears_api_key', e.target.value);
